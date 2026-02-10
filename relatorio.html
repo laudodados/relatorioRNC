@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador Relatório de Não Conformidade</title>
+  <style>
+    /* --- ESTILO GERAL DA TELA DE PREENCHIMENTO --- */
+    :root {
+      --cor-primaria: #002060;
+      --cor-fundo: #002060;
+      --cor-card: #ffffff;
+      --cor-borda: #dee2e6;
+      --cor-texto: #333;
+    }
+
+    body { 
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0; padding: 20px;
+      background-color: var(--cor-fundo); color: var(--cor-texto);
+    }
+
+    h1 { color: #fff; text-align: center; text-shadow: 1px 1px 2px #000; margin-bottom: 20px;}
+    h2 { color: var(--cor-primaria); border-bottom: 2px solid var(--cor-primaria); padding-bottom: 5px; margin-top: 0; }
+
+    .form-section {
+      border: 1px solid var(--cor-borda); 
+      padding: 25px; margin: 20px auto; max-width: 1000px;
+      border-radius: 8px; background-color: var(--cor-card);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+    .label-helper { font-weight: normal; color: #666; font-size: 0.85em; margin-left: 5px; font-style: italic; }
+
+    input, select, textarea {
+      width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc;
+      font-size: 14px; box-sizing: border-box; font-family: Arial, sans-serif;
+    }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; }
+
+    /* Botões */
+    .btn-action {
+      width: 100%; padding: 15px; font-size: 18px; font-weight: bold;
+      background-color: #28a745; color: white; border: none; border-radius: 8px;
+      cursor: pointer; margin-top: 20px; transition: 0.2s;
+    }
+    .btn-action:hover { background-color: #218838; }
+    
+    .btn-add { background-color: var(--cor-primaria); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
+    .btn-remove { background-color: #dc3545; color: white; border: none; padding: 0; width: 25px; height: 25px; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+
+    /* Inputs Ishikawa */
+    .ish-input-group { margin-bottom: 5px; display: flex; gap: 5px; align-items: center; }
+    .ish-input-group input { flex-grow: 1; padding: 6px; font-size: 13px; }
+    .btn-plus-ish { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; }
+    .ish-container-title { display: flex; align-items: center; margin-bottom: 10px; font-weight: bold; color: var(--cor-primaria); font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    .ish-count { margin-left: auto; font-size: 10px; color: #888; font-weight: normal; }
+
+    /* Preview Imagens */
+    .preview-box { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding: 10px; border: 1px dashed #ccc; background: #f9f9f9; border-radius: 5px; min-height: 50px; }
+    .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+
+    /* Tabela 5W2H */
+    .tabela-input { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .tabela-input th { background: #e9ecef; padding: 8px; font-size: 12px; border: 1px solid #dee2e6; }
+    .tabela-input td { padding: 5px; border: 1px solid #dee2e6; }
+  </style>
+</head>
+<body>
+
+  <h1>Gerador de RNC (Padrão Sodramar)</h1>
+
+  <form id="rncForm">
+    <div class="form-section">
+      <h2>1. Dados Gerais</h2>
+      <div class="grid-2">
+        <div class="form-group"><label>Código do Produto:</label><input type="text" id="codProduto"></div>
+        <div class="form-group"><label>Nº RAC:</label><input type="text" id="nRac"></div>
+      </div>
+      <div class="form-group"><label>Descrição do Produto:</label><input type="text" id="descProduto"></div>
+      <div class="grid-4">
+        <div class="form-group"><label>Data Ocorrência:</label><input type="date" id="dataOcorrencia"></div>
+        <div class="form-group"><label>Nº NF:</label><input type="text" id="nNf"></div>
+        <div class="form-group"><label>Qtd. Peças:</label><input type="number" id="qtdPecas"></div>
+        <div class="form-group"><label>Data Fabricação:</label><input type="date" id="dataFabricacao"></div>
+      </div>
+      <div class="grid-2">
+          <div class="form-group"><label>Departamento Responsável:</label><input type="text" id="deptoResp"></div>
+          <div class="form-group"><label>Analisado Por:</label><input type="text" id="analisadoPor" placeholder="Nome do técnico/analista"></div>
+      </div>
+      <div class="form-group"><label>Descrição da Não Conformidade:</label><input type="text" id="descNC"></div>
+    </div>
+
+    <div class="form-section">
+      <h2>2. Resumo da Ocorrência</h2>
+      <textarea id="resumoOcorrencia" rows="4" placeholder="Detalhes do ocorrido..."></textarea>
+    </div>
+
+    <div class="form-section">
+      <h2>3. Fotos em Campo</h2>
+      <input type="file" id="evidenciasInput" multiple accept="image/*">
+      <div class="preview-box" id="previewEvidencias"></div>
+    </div>
+
+    <div class="form-section">
+      <h2>4. Ações (Imediatas)</h2>
+      <textarea id="acoesTexto" rows="4" placeholder="Ações tomadas..."></textarea>
+    </div>
+
+    <div class="form-section">
+      <h2>5. Fotos com Produto em Fábrica</h2>
+      <input type="file" id="analisesInput" multiple accept="image/*">
+      <div class="preview-box" id="previewAnalises"></div>
+      <textarea id="textoAnalise" rows="3" style="margin-top:10px" placeholder="Comentários..."></textarea>
+    </div>
+
+    <div class="form-section">
+      <h2>6. Método de Análise (5 Porquês)</h2>
+      
+      <div class="form-group" style="background: #f8f9fa; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 15px;">
+        <label>Descrição da Não Conformidade (Para Análise):</label>
+        <input type="text" id="descNC_Analise" placeholder="Repita ou refine o problema...">
+      </div>
+
+      <div class="form-group">
+        <label>1. Por que? <span class="label-helper">[Questione o motivo da não conformidade]</span></label>
+        <input type="text" id="pq1">
+      </div>
+      <div class="form-group">
+        <label>2. Por que? <span class="label-helper">[Questione resposta 1]</span></label>
+        <input type="text" id="pq2">
+      </div>
+      <div class="form-group">
+        <label>3. Por que? <span class="label-helper">[Questione resposta 2]</span></label>
+        <input type="text" id="pq3">
+      </div>
+      <div class="form-group">
+        <label>4. Por que? <span class="label-helper">[Questione resposta 3]</span></label>
+        <input type="text" id="pq4">
+      </div>
+      <div class="form-group">
+        <label style="color:#d63384;">5. Por que (Causa Raiz)? <span class="label-helper">[Questione resposta 4]</span></label>
+        <input type="text" id="pq5">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>7. Diagrama de Ishikawa</h2>
+      <p style="font-size:0.9em; color:#555; background:#e9ecef; padding:5px; border-radius:4px;">
+        Use o botão <strong>"+"</strong>. Máximo de <strong>6 itens</strong> por categoria. O texto será ajustado automaticamente no PDF.
+      </p>
+      
+      <div class="grid-3">
+        <div class="form-group"><div class="ish-container-title">Medida <span class="ish-count" id="count-medida">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-medida', 'count-medida')">+</button></div><div id="container-medida"></div></div>
+        <div class="form-group"><div class="ish-container-title">Método <span class="ish-count" id="count-metodo">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-metodo', 'count-metodo')">+</button></div><div id="container-metodo"></div></div>
+        <div class="form-group"><div class="ish-container-title">Máquina <span class="ish-count" id="count-maquina">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-maquina', 'count-maquina')">+</button></div><div id="container-maquina"></div></div>
+      </div>
+      
+      <div class="grid-3">
+        <div class="form-group"><div class="ish-container-title">Meio Ambiente <span class="ish-count" id="count-ambiente">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-ambiente', 'count-ambiente')">+</button></div><div id="container-ambiente"></div></div>
+        <div class="form-group"><div class="ish-container-title">Mão de Obra <span class="ish-count" id="count-mao">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-mao', 'count-mao')">+</button></div><div id="container-mao"></div></div>
+        <div class="form-group"><div class="ish-container-title">Material <span class="ish-count" id="count-material">0/6</span> <button type="button" class="btn-plus-ish" onclick="addIshItem('container-material', 'count-material')">+</button></div><div id="container-material"></div></div>
+      </div>
+
+      <div class="form-group" style="margin-top:20px;">
+        <label>Efeito (Problema Principal):</label>
+        <input type="text" id="ishEfeito" placeholder="Ex: Fogo no trocador">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>8. Plano de Ação (5W2H)</h2>
+      <div style="overflow-x:auto;">
+        <table class="tabela-input" id="tabela5w2h">
+          <thead><tr><th>O QUE?</th><th>POR QUE?</th><th>QUEM?</th><th>ONDE?</th><th>QUANDO?</th><th>COMO?</th><th>QUANTO?</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-add" onclick="adicionarLinha5W2H()">+ Adicionar Ação</button>
+    </div>
+
+    <div style="max-width: 1000px; margin: 0 auto 50px;">
+      <button type="button" class="btn-action" onclick="gerarRelatorio()">Gerar Relatório PDF</button>
+    </div>
+  </form>
+
+<script>
+  // --- IMAGENS ---
+  const imagensEvidencias = [];
+  const imagensAnalises = [];
+
+  function setupImg(idInput, idPreview, lista) {
+    document.getElementById(idInput).addEventListener("change", function(e) {
+      const prev = document.getElementById(idPreview);
+      prev.innerHTML = ""; lista.length = 0;
+      Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const img = document.createElement("img");
+          img.src = evt.target.result;
+          img.className = "preview-img";
+          prev.appendChild(img);
+          lista.push(evt.target.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+  setupImg("evidenciasInput", "previewEvidencias", imagensEvidencias);
+  setupImg("analisesInput", "previewAnalises", imagensAnalises);
+
+  // --- ISHIKAWA (COM LIMITE DE 6) ---
+  function addIshItem(containerId, countId) {
+    const container = document.getElementById(containerId);
+    
+    // VERIFICAÇÃO DE LIMITE
+    if (container.children.length >= 6) {
+      alert("Máximo de 6 itens permitidos por categoria.");
+      return;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'ish-input-group';
+    div.innerHTML = `
+        <input type="text" placeholder="Causa...">
+        <button type="button" class="btn-remove" onclick="removeIshItem(this, '${countId}')">X</button>
+    `;
+    container.appendChild(div);
+    updateIshCount(containerId, countId);
+  }
+
+  function removeIshItem(btn, countId) {
+    const container = btn.parentElement.parentElement;
+    btn.parentElement.remove();
+    updateIshCount(container.id, countId);
+  }
+
+  function updateIshCount(containerId, countId) {
+    const count = document.getElementById(containerId).children.length;
+    document.getElementById(countId).innerText = count + "/6";
+  }
+
+  // --- 5W2H ---
+  function adicionarLinha5W2H() {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" class="i-what"></td><td><input type="text" class="i-why"></td>
+      <td><input type="text" class="i-who"></td><td><input type="text" class="i-where"></td>
+      <td><input type="date" class="i-when"></td><td><input type="text" class="i-how"></td>
+      <td><input type="text" class="i-much"></td>
+      <td style="text-align:center"><button type="button" class="btn-remove" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+    document.querySelector("#tabela5w2h tbody").appendChild(tr);
+  }
+  adicionarLinha5W2H();
+
+  // --- GERADOR SVG ISHIKAWA ---
+  function gerarIshikawaSVG(dadosIsh) {
+    // CONFIGURAÇÕES DE LAYOUT
+    const width = 800;
+    const height = 750;
+    const spineY = height / 2;    // 375
+    
+    // CONFIGURAÇÃO DO DIAGRAMA
+    const espacamento = 45;       // Altura entre as linhas
+    const inclinacao = 100;       // Ângulo da linha (Horizontal)
+    
+    // Cálculos
+    const alturaEspinha = spineY - 40; 
+    const passoHorizontal = (inclinacao / alturaEspinha) * espacamento; 
+
+    const spineColor = "#002060";
+    const spineWidth = 3;
+    const ribPositions = [200, 450, 700];
+
+    const line = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${spineColor}" stroke-width="${spineWidth}" />`;
+    
+    const box = (x, y, label) => `
+        <rect x="${x}" y="${y}" width="140" height="25" fill="#f0f0f0" stroke="${spineColor}" stroke-width="1.5" />
+        <text x="${x+70}" y="${y+17}" font-family="Arial" font-size="12" font-weight="bold" fill="${spineColor}" text-anchor="middle">${label}</text>
+    `;
+
+    // FUNÇÃO DE DESENHO DOS ITENS
+    const drawItems = (items, startX, startY, isTop) => {
+        let svgItems = "";
+        const stepY = isTop ? espacamento : -espacamento; 
+        
+        // AJUSTE FINAL: Padding simétrico de 20px para ambos
+        const paddingRight = 20; 
+
+        items.forEach((txt, i) => {
+            const itemY = startY + ((i + 1) * stepY);
+            const currentX = startX - ((i + 1) * passoHorizontal); 
+            const lineLen = 140;
+            
+            // Linha horizontal
+            svgItems += `<line x1="${currentX}" y1="${itemY}" x2="${currentX - lineLen}" y2="${itemY}" stroke="${spineColor}" stroke-width="1" />`;
+            
+            const divY = itemY - 35; 
+            
+            // Texto
+            svgItems += `
+            <foreignObject x="${currentX - 145}" y="${divY}" width="140" height="34">
+                <div xmlns="http://www.w3.org/1999/xhtml" style="
+                    width: 100%; height: 100%; 
+                    box-sizing: border-box; 
+                    display: flex; align-items: flex-end; justify-content: flex-end; 
+                    text-align: right; font-family: Arial; font-size: 10px; line-height: 1.1; 
+                    color: #000; word-wrap: break-word; overflow: hidden; 
+                    padding-right: ${paddingRight}px; 
+                ">
+                   ${txt}
+                </div>
+            </foreignObject>
+            `;
+        });
+        return svgItems;
+    };
+
+    const getCleanItems = (id) => Array.from(document.querySelectorAll(`#${id} input`)).map(i => i.value).filter(v => v.trim() !== '');
+
+    let svgContent = "";
+    // Espinha central
+    svgContent += line(20, spineY, 750, spineY);
+    
+    // Cabeça
+    svgContent += `<polygon points="750,${spineY} 765,${spineY-10} 765,${spineY+10}" fill="${spineColor}" />`;
+    svgContent += `<rect x="765" y="${spineY-40}" width="150" height="80" fill="white" stroke="${spineColor}" stroke-width="2" />`;
+    svgContent += `<text x="840" y="${spineY-25}" font-family="Arial" font-size="12" font-weight="bold" fill="${spineColor}" text-anchor="middle">EFEITO:</text>`;
+    
+    svgContent += `
+    <foreignObject x="765" y="${spineY-20}" width="150" height="60">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="
+            width: 150px; height: 60px; display: flex; align-items: center; justify-content: center; 
+            text-align: center; font-family: Arial; font-size: 11px; line-height: 1.1; 
+            color: #000; word-wrap: break-word; overflow: hidden;
+        ">
+           ${dadosIsh.efeito}
+        </div>
+    </foreignObject>
+    `;
+
+    const categories = [
+        { label: "MEDIDA", x: ribPositions[0], top: true, id: 'container-medida' },
+        { label: "MÉTODO", x: ribPositions[1], top: true, id: 'container-metodo' },
+        { label: "MÁQUINA", x: ribPositions[2], top: true, id: 'container-maquina' },
+        { label: "MEIO AMBIENTE", x: ribPositions[0], top: false, id: 'container-ambiente' },
+        { label: "MÃO DE OBRA", x: ribPositions[1], top: false, id: 'container-mao' },
+        { label: "MATERIAL", x: ribPositions[2], top: false, id: 'container-material' }
+    ];
+
+    categories.forEach(cat => {
+        const startX = cat.x;
+        const startY = spineY;
+        const endX = startX - inclinacao; 
+        const endY = cat.top ? 40 : (height - 40); 
+        
+        svgContent += line(startX, startY, endX, endY);
+        svgContent += box(endX - 70, cat.top ? endY - 25 : endY, cat.label);
+        
+        const items = getCleanItems(cat.id);
+        svgContent += drawItems(items, startX, startY, !cat.top); 
+    });
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 950 ${height}" preserveAspectRatio="xMidYMid meet">${svgContent}</svg>`;
+  }
+
+  // --- GERAÇÃO DO PDF ---
+  function gerarRelatorio() {
+    const getVal = (id) => document.getElementById(id).value || '';
+    const fmtDt = (val) => val ? new Date(val).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : '';
+
+    const d = {
+      cod: getVal('codProduto'), rac: getVal('nRac'), desc: getVal('descProduto'),
+      dtOcor: fmtDt(getVal('dataOcorrencia')), nf: getVal('nNf'), qtd: getVal('qtdPecas'),
+      dtFab: fmtDt(getVal('dataFabricacao')), nc: getVal('descNC'), depto: getVal('deptoResp'),
+      analisadoPor: getVal('analisadoPor'), 
+      ncAnalise: getVal('descNC_Analise'),
+      resumo: getVal('resumoOcorrencia').replace(/\n/g, '<br>'),
+      acoes: getVal('acoesTexto').replace(/\n/g, '<br>'),
+      analise: getVal('textoAnalise').replace(/\n/g, '<br>'),
+      pq1: getVal('pq1'), pq2: getVal('pq2'), pq3: getVal('pq3'), pq4: getVal('pq4'), pq5: getVal('pq5')
+    };
+
+    const ishikawaSVG = gerarIshikawaSVG({ efeito: getVal('ishEfeito') });
+
+    let linhas5w = '';
+    document.querySelectorAll('#tabela5w2h tbody tr').forEach(tr => {
+      linhas5w += `<tr>
+        <td>${tr.querySelector('.i-what').value}</td>
+        <td>${tr.querySelector('.i-why').value}</td>
+        <td>${tr.querySelector('.i-who').value}</td>
+        <td>${tr.querySelector('.i-where').value}</td>
+        <td>${fmtDt(tr.querySelector('.i-when').value)}</td>
+        <td>${tr.querySelector('.i-how').value}</td>
+        <td>${tr.querySelector('.i-much').value}</td>
+      </tr>`;
+    });
+
+    const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const logoSrc = basePath + 'imagens/logolaudo.jpg';
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>RNC - ${d.rac}</title>
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 15px; color: #000; -webkit-print-color-adjust: exact; }
+          .container { width: 100%; max-width: 1000px; margin: 0 auto; }
+          
+          /* HEADER & TABELAS */
+          table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+          th, td { border: 1px solid #000; padding: 4px; vertical-align: top; }
+          
+          .header-table { border: 2px solid #000; margin-bottom: 15px; }
+          .logo-cell { width: 180px; text-align: center; vertical-align: middle; }
+          .logo-cell img { max-width: 160px; max-height: 70px; }
+          .company-name { background-color: #002060 !important; color: white !important; font-weight: bold; text-align: center; font-size: 14px; padding: 6px; }
+
+          /* TÍTULOS DE SEÇÃO */
+          .section-title {
+            background-color: #002060 !important; color: white !important;
+            font-weight: bold; font-size: 12px; padding: 5px 8px; margin-top: 15px; margin-bottom: 5px;
+            text-transform: uppercase;
+          }
+          .field-label { font-weight: bold; color: #002060; font-size: 10px; display: block; margin-bottom: 2px; }
+          
+          /* CONTAINER ISHIKAWA SVG */
+          .ishikawa-container {
+            width: 100%;
+            height: 760px; /* Ajustado para caber o SVG de 750px */
+            border: 1px solid #000;
+            margin-top: 10px;
+            background: #fff;
+            overflow: hidden;
+          }
+
+          /* Tabela 5 Porques Específica */
+          .pq-label { font-weight: bold; }
+          .pq-helper { display: block; font-size: 9px; color: #555; font-style: italic; margin-top: 2px; }
+
+          /* Imagens */
+          .img-grid { display: flex; gap: 5px; flex-wrap: wrap; }
+          .img-grid img { width: 32%; height: 140px; object-fit: contain; border: 1px solid #ccc; background: #fff; }
+          
+          /* Header Tabela 5W2H */
+          .w2h-th { background-color: #002060 !important; color: white !important; font-size: 10px; text-align: center; }
+
+          @media print { .no-print { display: none; } .page-break { page-break-inside: avoid; } }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <table class="header-table">
+            <tr>
+              <td class="logo-cell"><img src="${logoSrc}" alt="Sodramar"></td>
+              <td style="padding:0; border:none;">
+                <table style="width:100%; margin:0; border:none;">
+                  <tr><td class="company-name" colspan="2">SODRAMAR INDUSTRIA E COMERCIO LTDA</td></tr>
+                  <tr>
+                    <td style="text-align:center; font-weight:bold; font-size:14px; padding:10px;">RELATÓRIO DE NÃO CONFORMIDADE</td>
+                    <td style="width:100px; text-align:center; font-size:10px;"><strong>Data:</strong><br>${new Date().toLocaleDateString('pt-BR')}</td>
+                  </tr>
+                  <tr><td colspan="2" style="background:#f0f0f0; font-size:11px; padding:4px;"><strong>RAC Nº:</strong> ${d.rac}</td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <div class="section-title">DADOS GERAIS</div>
+          <table>
+            <tr>
+              <td width="15%"><span class="field-label">Cód. Produto</span>${d.cod}</td>
+              <td width="45%"><span class="field-label">Descrição</span>${d.desc}</td>
+              <td width="20%"><span class="field-label">Nota Fiscal</span>${d.nf}</td>
+              <td width="20%"><span class="field-label">Data Ocor.</span>${d.dtOcor}</td>
+            </tr>
+            <tr>
+              <td><span class="field-label">Qtd.</span>${d.qtd}</td>
+              <td><span class="field-label">Data Fab.</span>${d.dtFab}</td>
+              <td><span class="field-label">Depto</span>${d.depto}</td>
+              <td><span class="field-label">Analisado Por</span>${d.analisadoPor}</td>
+            </tr>
+            <tr>
+               <td colspan="4"><span class="field-label">NC</span>${d.nc}</td>
+            </tr>
+          </table>
+
+          <div class="section-title">RESUMO DA OCORRÊNCIA</div>
+          <div style="border:1px solid #000; padding:5px; min-height:40px;">${d.resumo}</div>
+
+          <div class="section-title">FOTOS EM CAMPO</div>
+          <div class="img-grid">
+            ${imagensEvidencias.length > 0 ? imagensEvidencias.map(src => `<img src="${src}">`).join('') : '<small style="padding:5px">Nenhuma foto anexada.</small>'}
+          </div>
+
+          <div class="section-title">AÇÕES IMEDIATAS</div>
+          <div style="border:1px solid #000; padding:5px; min-height:30px;">${d.acoes}</div>
+
+          <div class="page-break"></div>
+
+          <div class="section-title">FOTOS COM PRODUTO EM FÁBRICA</div>
+          <div class="img-grid">
+            ${imagensAnalises.map(src => `<img src="${src}">`).join('')}
+          </div>
+          <p style="border:1px solid #ccc; padding:5px; margin-top:5px;">${d.analise}</p>
+
+          <div class="section-title">MÉTODO DE ANÁLISE (5 PORQUÊS)</div>
+          
+          <div style="border: 1px solid #000; border-bottom: none; background: #e9ecef; padding: 4px; font-weight: bold; font-size: 10px;">
+            DESCRIÇÃO DA NÃO CONFORMIDADE:
+          </div>
+          <div style="border: 1px solid #000; border-top: none; padding: 5px; margin-bottom: 10px; min-height: 20px;">
+             ${d.ncAnalise ? d.ncAnalise : d.nc}
+          </div>
+
+          <table style="width:100%">
+            <tr>
+                <td width="35%">
+                    <span class="pq-label">1. Por que?</span>
+                    <span class="pq-helper">[Questione o motivo da não conformidade]</span>
+                </td>
+                <td>${d.pq1}</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="pq-label">2. Por que?</span>
+                    <span class="pq-helper">[Questione resposta 1]</span>
+                </td>
+                <td>${d.pq2}</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="pq-label">3. Por que?</span>
+                    <span class="pq-helper">[Questione resposta 2]</span>
+                </td>
+                <td>${d.pq3}</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="pq-label">4. Por que?</span>
+                    <span class="pq-helper">[Questione resposta 3]</span>
+                </td>
+                <td>${d.pq4}</td>
+            </tr>
+            <tr>
+                <td style="background:#e6f4ea">
+                    <span class="pq-label">5. Por que (Causa Raiz)?</span>
+                    <span class="pq-helper">[Questione resposta 4]</span>
+                </td>
+                <td style="background:#e6f4ea; font-weight:bold;">${d.pq5}</td>
+            </tr>
+          </table>
+
+          <div class="section-title">DIAGRAMA DE ISHIKAWA</div>
+          <div class="ishikawa-container">
+            ${ishikawaSVG}
+          </div>
+
+          <div class="section-title">PLANO DE AÇÃO (5W2H)</div>
+          <table>
+            <thead><tr><th class="w2h-th">O QUE?</th><th class="w2h-th">POR QUE?</th><th class="w2h-th">QUEM?</th><th class="w2h-th">ONDE?</th><th class="w2h-th">QUANDO?</th><th class="w2h-th">COMO?</th><th class="w2h-th">QUANTO?</th></tr></thead>
+            <tbody>${linhas5w}</tbody>
+          </table>
+
+          <div class="no-print" style="text-align:center; margin-top:20px;">
+            <button onclick="window.print()" style="padding:12px 25px; background:#002060; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:16px;">SALVAR PDF</button>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  }
+</script>
+</body>
+</html>
